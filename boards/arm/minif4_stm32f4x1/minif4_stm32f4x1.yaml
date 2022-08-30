@@ -1,0 +1,18 @@
+identifier: minif4_f401
+name: WeActStudio MiniF4 F401
+type: mcu
+arch: arm
+toolchain:
+  - zephyr
+  - gnuarmemb
+  - xtools
+supported:
+  - pwm
+  - counter
+  - gpio
+  - i2c
+  - spi
+  - adc
+  - watchdog
+ram: 64
+flash: 256

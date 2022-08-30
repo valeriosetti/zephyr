@@ -1,0 +1,8 @@
+# MINIF4 F401 board configuration
+
+# Copyright (c) 2016 Linaro Limited.
+# SPDX-License-Identifier: Apache-2.0
+
+config BOARD_MINI_F401
+	bool "WeAct studio STM32F4x1 MiniF4 Development Board"
+	depends on SOC_STM32F401XC
