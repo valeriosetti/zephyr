@@ -3,6 +3,7 @@
 #include <zephyr/device.h>
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/drivers/sensor.h>
+#include <zephyr/drivers/sensor/qdec_stm32.h>
 
 #include <zephyr/usb/usb_device.h>
 #include <zephyr/usb/class/usb_hid.h>
@@ -34,6 +35,8 @@ static enum usb_dc_status_code usb_status;
 #define MOUSE_BTN_LEFT		BIT(0)
 #define MOUSE_BTN_RIGHT		BIT(1)
 #define MOUSE_BTN_MIDDLE	BIT(2)
+
+#define ZERO_CROSS_THRESHOLD		270
 
 static void status_cb(enum usb_dc_status_code status, const uint8_t *param)
 {
@@ -274,11 +277,21 @@ K_THREAD_DEFINE(blink_task, STACKSIZE, blink_task_func, NULL, NULL, NULL,
 
 void encoder_task_func(void)
 {
-	struct sensor_value old_val = {0};
-	struct sensor_value new_val;
 	const struct device *dev = DEVICE_DT_GET_ONE(st_stm32_qdec);
+	struct sensor_value sensor_val;
+	uint32_t curr_val, prev_val, max_val;
+	int32_t delta_val;
 	int ret;
 
+	prev_val = 0;
+
+	ret = sensor_attr_get(dev, SENSOR_CHAN_RAW_COUNTER, SENSOR_ATTR_MAX_VALUE, &sensor_val);
+	if (ret) {
+		printk("Failed to parse counter attribute (%d)\n", ret);
+		return;
+	}
+	max_val = sensor_val.val1;
+	
 	while (1) {
 		ret = sensor_sample_fetch(dev);
 		if (ret) {
@@ -286,24 +299,33 @@ void encoder_task_func(void)
 			continue;
 		}
 
-		ret = sensor_channel_get(dev, SENSOR_CHAN_ROTATION, &new_val);
+		ret = sensor_channel_get(dev, SENSOR_CHAN_RAW_COUNTER, &sensor_val);
 		if (ret) {
 			printk("Failed to get data (%d)\n", ret);
 			continue;
 		}
 
-		LOG_INF("val=%d", new_val.val1);
+		curr_val = sensor_val.val1;
 
-		//if (old_val.val1 != new_val.val1) {
-			//status[WHEEL_REPORT_POS] = new_val.val1 - old_val.val1;
-			//LOG_INF("new=%d - old=%d - rep=%hhd",
-						//new_val.val1, old_val.val1,
-						//status[WHEEL_REPORT_POS]);
-			//old_val.val1 = new_val.val1;
-			//k_sem_give(&sem);
-		//}
+		if (curr_val != prev_val) {
+			if ((curr_val < UINT16_MAX/2) && (prev_val > UINT16_MAX/2)) {
+				delta_val = curr_val + max_val - prev_val + 1;
+			} else if ((curr_val > UINT16_MAX/2) && (prev_val < UINT16_MAX/2)) {
+				delta_val = max_val - curr_val + prev_val + 1;
+				delta_val *= -1;
+			} else {
+				delta_val = curr_val - prev_val;
+			}
+			
+			status[WHEEL_REPORT_POS] = delta_val;
+			LOG_INF("curr=%d - prev=%d - rep=%hhd",
+						curr_val, prev_val,
+						status[WHEEL_REPORT_POS]);
+			prev_val = curr_val;
+			k_sem_give(&sem);
+		}
 
-		k_msleep(100);
+		k_msleep(50);
 	}
 }
 
