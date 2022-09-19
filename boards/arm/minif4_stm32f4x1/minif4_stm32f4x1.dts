@@ -44,7 +44,6 @@
 	aliases {
 		led0 = &green_led_2;
 		sw0 = &econder_button;
-		dec0 = &qdec;
 	};
 };
 
@@ -82,19 +81,6 @@
 	pinctrl-names = "default";
 	current-speed = <115200>;
 	status = "okay";
-};
-
-&timers3 {
-	status = "okay";
-	st,prescaler = <3>;
-	
-	qdec: qdec {
-		status = "okay";
-		pinctrl-0 = <&tim3_ch1_pa6 &tim3_ch2_pa7>;
-		pinctrl-names = "default";
-		input-polarity-inverted;
-		input-filter-level = <15>;
-	};
 };
 
 zephyr_udc0: &usbotg_fs {

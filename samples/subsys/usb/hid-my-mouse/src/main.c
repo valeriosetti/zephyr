@@ -292,14 +292,16 @@ void encoder_task_func(void)
 			continue;
 		}
 
-		if (old_val.val1 != new_val.val1) {
-			status[WHEEL_REPORT_POS] = new_val.val1 - old_val.val1;
-			LOG_INF("new=%d - old=%d - rep=%hhd",
-						new_val.val1, old_val.val1,
-						status[WHEEL_REPORT_POS]);
-			old_val.val1 = new_val.val1;
-			k_sem_give(&sem);
-		}
+		LOG_INF("val=%d", new_val.val1);
+
+		//if (old_val.val1 != new_val.val1) {
+			//status[WHEEL_REPORT_POS] = new_val.val1 - old_val.val1;
+			//LOG_INF("new=%d - old=%d - rep=%hhd",
+						//new_val.val1, old_val.val1,
+						//status[WHEEL_REPORT_POS]);
+			//old_val.val1 = new_val.val1;
+			//k_sem_give(&sem);
+		//}
 
 		k_msleep(100);
 	}
