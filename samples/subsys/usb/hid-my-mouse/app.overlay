@@ -1,6 +1,7 @@
 / {
 	aliases {
 		qdec0 = &qdec;
+		sw0 = &econder_button;
 	};
 	
 	gpio_keys {

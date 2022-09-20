@@ -39,7 +39,7 @@
 
 	aliases {
 		led0 = &green_led_2;
-		sw0 = &econder_button;
+		sw0 = &mainboard_button;
 	};
 };
 
