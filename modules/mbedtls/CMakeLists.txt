@@ -20,6 +20,7 @@ zephyr_interface_library_named(mbedTLS)
       target_include_directories(mbedTLS INTERFACE
         $<TARGET_PROPERTY:tfm,TFM_BINARY_DIR>/api_ns/interface/include
       )
+      target_link_libraries(tfm_api)
     endif()
 
     # Add regular includes
@@ -29,11 +30,10 @@ zephyr_interface_library_named(mbedTLS)
         include
     )
 
-    # Add base library with files required by all drivers/backends.
-    zephyr_library_named(mbedTLSBase)
+    # Crypto toolbox API.
+    zephyr_library_named(mbedcrypto)
 
-    # Base mbed TLS files
-    list(APPEND mbedtls_base_src
+    list(APPEND mbedcrypto_src
       ${ZEPHYR_CURRENT_MODULE_DIR}/library/aes.c
       ${ZEPHYR_CURRENT_MODULE_DIR}/library/aesni.c
       ${ZEPHYR_CURRENT_MODULE_DIR}/library/aria.c
@@ -95,12 +95,6 @@ zephyr_interface_library_named(mbedTLS)
       zephyr_init.c
     )
 
-    zephyr_library_sources(${mbedtls_base_src})
-
-    zephyr_library_sources_ifdef(CONFIG_MBEDTLS_DEBUG debug.c)
-    zephyr_library_sources_ifdef(CONFIG_MBEDTLS_SHELL shell.c)
-
-    zephyr_library_app_memory(k_mbedtls_partition)
     if(CONFIG_ARCH_POSIX AND CONFIG_ASAN AND NOT CONFIG_64BIT)
       # i386 assembly code used in MBEDTLS does not compile with size optimization
       # if address sanitizer is enabled, as such switch default optimization level
@@ -109,12 +103,22 @@ zephyr_interface_library_named(mbedTLS)
           "${OPTIMIZE_FOR_SPEED_FLAG}")
     endif ()
 
-    zephyr_library_link_libraries(mbedTLS)
+    # "Intermediate" modules that are needed by both mbedcrypto as well as
+    # mbedx509/mbedtls.
+    list(APPEND mbedcrypto_src
+      ${ZEPHYR_CURRENT_MODULE_DIR}/library/pem.c
+      ${ZEPHYR_CURRENT_MODULE_DIR}/library/pkcs12.c
+      ${ZEPHYR_CURRENT_MODULE_DIR}/library/pkcs5.c
+      ${ZEPHYR_CURRENT_MODULE_DIR}/library/pkparse.c
+      ${ZEPHYR_CURRENT_MODULE_DIR}/library/pkwrite.c
+      ${ZEPHYR_CURRENT_MODULE_DIR}/library/pk.c
+      ${ZEPHYR_CURRENT_MODULE_DIR}/library/pk_wrap.c
+    )
 
-    zephyr_library_named(mbedTLSCrypto)
-
+    # MbedTLS implementation of PSA APIs. These are required only in builds
+    # without TFM.
     if (CONFIG_MBEDTLS_PSA_CRYPTO_C AND NOT CONFIG_BUILD_WITH_TFM)
-      list(APPEND crypto_source
+      list(APPEND mbedcrypto_src
         ${ZEPHYR_CURRENT_MODULE_DIR}/library/psa_crypto_aead.c
         ${ZEPHYR_CURRENT_MODULE_DIR}/library/psa_crypto_cipher.c
         ${ZEPHYR_CURRENT_MODULE_DIR}/library/psa_crypto_driver_wrappers_no_static.c
@@ -131,25 +135,17 @@ zephyr_interface_library_named(mbedTLS)
       )
     endif()
 
-    list(APPEND crypto_source
-      ${ZEPHYR_CURRENT_MODULE_DIR}/library/pem.c
-      ${ZEPHYR_CURRENT_MODULE_DIR}/library/pkcs12.c
-      ${ZEPHYR_CURRENT_MODULE_DIR}/library/pkcs5.c
-      ${ZEPHYR_CURRENT_MODULE_DIR}/library/pkparse.c
-      ${ZEPHYR_CURRENT_MODULE_DIR}/library/pkwrite.c
-      ${ZEPHYR_CURRENT_MODULE_DIR}/library/pk.c
-      ${ZEPHYR_CURRENT_MODULE_DIR}/library/pk_wrap.c
-    )
+    zephyr_library_sources_ifdef(CONFIG_MBEDTLS_DEBUG debug.c)
+    zephyr_library_sources_ifdef(CONFIG_MBEDTLS_SHELL shell.c)
 
-    zephyr_library_sources(${crypto_source})
+    zephyr_library_sources(${mbedcrypto_src})
 
     zephyr_library_link_libraries(mbedTLS)
 
-    zephyr_library_link_libraries_ifdef(CONFIG_BUILD_WITH_TFM tfm_api)
+    # X509 source files
+    zephyr_library_named(mbedx509)
 
-    zephyr_library_named(mbedTLSX509)
-
-    list(APPEND x509_source
+    list(APPEND mbedx509_src
       ${ZEPHYR_CURRENT_MODULE_DIR}/library/x509.c
       ${ZEPHYR_CURRENT_MODULE_DIR}/library/x509_create.c
       ${ZEPHYR_CURRENT_MODULE_DIR}/library/x509_crl.c
@@ -159,11 +155,12 @@ zephyr_interface_library_named(mbedTLS)
       ${ZEPHYR_CURRENT_MODULE_DIR}/library/x509write_csr.c
     )
 
-    zephyr_library_sources(${x509_source})
+    zephyr_library_sources(${mbedx509_src})
 
     zephyr_library_link_libraries(mbedTLS)
 
-    zephyr_library()
+    # TLS/DTLS source files
+    zephyr_library_named(mbedtls)
 
     list(APPEND mbedtls_source
       ${ZEPHYR_CURRENT_MODULE_DIR}/library/net_sockets.c
@@ -185,12 +182,9 @@ zephyr_interface_library_named(mbedTLS)
 
     zephyr_library_sources(${mbedtls_source})
 
-    zephyr_library_link_libraries(
-      mbedTLSX509
-      mbedTLSCrypto
-      mbedTLSBase
-      mbedTLS
-    )
+    zephyr_library_link_libraries(mbedTLS)
+
+    zephyr_library_app_memory(k_mbedtls_partition)
 
 elseif (CONFIG_MBEDTLS_LIBRARY)
 
