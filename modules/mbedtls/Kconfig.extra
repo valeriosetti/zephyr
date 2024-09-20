@@ -1,0 +1,15 @@
+# Copyright (c) 2024 BayLibre SAS
+# SPDX-License-Identifier: Apache-2.0
+
+# Extra options the are not strictly necessary for Mbed TLS itself, but that
+# configure it properly for other modules/subsystems.
+
+config MBEDTLS_OPENTHREAD_OPTIMIZATIONS_ENABLED
+	bool "MbedTLS optimizations for OpenThread"
+	depends on NET_L2_OPENTHREAD
+	default y if !NET_SOCKETS_SOCKOPT_TLS
+	help
+	  Enable some OpenThread specific mbedTLS optimizations that allows to
+	  save some RAM/ROM when OpenThread is used. Note, that when application
+	  aims to use other mbedTLS services on top of OpenThread (e.g. secure
+	  sockets), it's advised to disable this option.
