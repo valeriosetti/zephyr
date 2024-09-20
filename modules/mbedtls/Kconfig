@@ -51,7 +51,7 @@ config CUSTOM_MBEDTLS_CFG_FILE
 config MBEDTLS_CFG_FILE
 	string "mbed TLS configuration file" if CUSTOM_MBEDTLS_CFG_FILE
 	depends on MBEDTLS_BUILTIN
-	default "config-tls-generic.h"
+	default "config-mbedtls.h"
 	help
 	  Use a specific mbedTLS configuration file. The default config file
 	  file can be tweaked with Kconfig. The default configuration is
@@ -72,7 +72,7 @@ config MBEDTLS_USER_CONFIG_FILE
 	  User config file that can contain mbedTLS configs that were not
 	  covered by the generic config file.
 
-if MBEDTLS_BUILTIN && MBEDTLS_CFG_FILE = "config-tls-generic.h"
+if MBEDTLS_BUILTIN && MBEDTLS_CFG_FILE = "config-mbedtls.h"
 
 rsource "Kconfig.crypto"
 rsource "Kconfig.extra"
