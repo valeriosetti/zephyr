@@ -72,14 +72,13 @@ config MBEDTLS_USER_CONFIG_FILE
 	  User config file that can contain mbedTLS configs that were not
 	  covered by the generic config file.
 
-menu "Mbed TLS configuration"
-	depends on MBEDTLS_BUILTIN && MBEDTLS_CFG_FILE = "config-tls-generic.h"
+if MBEDTLS_BUILTIN && MBEDTLS_CFG_FILE = "config-tls-generic.h"
 
 rsource "Kconfig.crypto"
 rsource "Kconfig.extra"
 rsource "Kconfig.tls"
 
-endmenu
+endif
 
 module = MBEDTLS
 module-str = Log level mbedTLS library debug hook
