@@ -85,6 +85,26 @@ endif # MBEDTLS_ECP_C
 
 endmenu # Elliptic curve libraries
 
+menu "RSA"
+
+config MBEDTLS_RSA_C
+	bool "RSA base support"
+
+if MBEDTLS_RSA_C
+
+config MBEDTLS_PKCS1_V15
+	bool "PKCS1 v1.5"
+
+config MBEDTLS_PKCS1_V21
+	bool "PKCS1 v2.1 (OAEP and PSS)"
+
+config MBEDTLS_GENPRIME_ENABLED
+	bool "Prime-number generation"
+
+endif # MBEDTLS_RSA_C
+
+endmenu # RSA
+
 menu "Ciphers and cipher modes"
 
 config MBEDTLS_CIPHER_ALL_ENABLED
@@ -359,9 +379,6 @@ endmenu # PSA crypto core
 
 config MBEDTLS_HKDF_C
 	bool "HMAC-based Extract-and-Expand Key Derivation Function"
-
-config MBEDTLS_GENPRIME_ENABLED
-	bool "prime-number generation code."
 
 config MBEDTLS_PEM_CERTIFICATE_FORMAT
 	bool "Support for PEM certificate format"
