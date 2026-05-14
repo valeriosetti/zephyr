@@ -31,7 +31,7 @@ menuconfig MBEDTLS
 if MBEDTLS
 
 choice MBEDTLS_IMPLEMENTATION
-	prompt "Select implementation"
+	prompt "Select Mbed TLS implementation"
 	default MBEDTLS_BUILTIN
 
 config MBEDTLS_BUILTIN
@@ -47,6 +47,35 @@ config MBEDTLS_CUSTOM
 	  The Mbed TLS library must be configured and added out of tree.
 
 endchoice # MBEDTLS_IMPLEMENTATION
+
+choice TF_PSA_CRYPTO_IMPLEMENTATION
+	prompt "Select TF-PSA-Crypto implementation"
+	default MBEDTLS_BUILTIN
+
+config TF_PSA_CRYPTO_BUILTIN
+	bool "Zephyr in-tree TF-PSA-Crypto version"
+	help
+	  Link with TF-PSA-Crypto sources included with Zephyr distribution.
+	  Included TF-PSA-Crypto version is well integrated with and supported
+	  by Zephyr, and the recommended choice for most users.
+
+config TF_PSA_CRYPTO_CUSTOM
+	bool "Custom TF-PSA-Crypto library"
+	help
+	  The TF-PSA-Crypto library must be configured and added out of tree.
+	  Note: the upstream TF-PSA-Crypto provided from Mbed TLS is still
+	  used to build Mbed TLS (because of dependencies), but then it is
+	  removed from linked libraries and replaced with the custom one.
+
+endchoice # TF_PSA_CRYPTO_IMPLEMENTATION
+
+if TF_PSA_CRYPTO_CUSTOM
+
+config TF_PSA_CRYPTO_CUSTOM_LIB_NAME
+	string "Name of the custom TF-PSA-Crypto library"
+	default "tfpsacrypto_custom"
+
+endif # TF_PSA_CRYPTO_CUSTOM
 
 rsource "Kconfig.mbedtls"
 rsource "Kconfig.tf-psa-crypto"

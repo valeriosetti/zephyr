@@ -44,6 +44,19 @@ if(CONFIG_MBEDTLS)
     # This creates 3 libraries: mbedtls, mbedx509 and tfpsacrypto.
     add_subdirectory(${ZEPHYR_MBEDTLS_MODULE_DIR} mbedtls)
 
+    # When a custom TF-PSA-Crypto implementation is provided, sever the
+    # automatic mbedtls/mbedx509->tfpsacrypto links and substitute the custom library.
+    if(CONFIG_TF_PSA_CRYPTO_CUSTOM)
+      foreach(mbedlib mbedtls mbedx509)
+        foreach(prop LINK_LIBRARIES INTERFACE_LINK_LIBRARIES)
+          get_target_property(linked_libs ${mbedlib} ${prop})
+          list(REMOVE_ITEM linked_libs tfpsacrypto)
+          set_property(TARGET ${mbedlib} PROPERTY ${prop} "${linked_libs}")
+        endforeach()
+        target_link_libraries(${mbedlib} PUBLIC ${CONFIG_TF_PSA_CRYPTO_CUSTOM_LIB_NAME})
+      endforeach()
+    endif()
+
     foreach(lib mbedtls mbedx509 tfpsacrypto builtin p256-m everest pqcp extras platform utilities)
       # Mbed TLS libraries are normal CMake libraries.
       # To ensure Mbed TLS libraries are including Zephyr include directories and
