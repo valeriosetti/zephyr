@@ -9,3 +9,7 @@ zephyr_library_sources_ifdef(CONFIG_SECURE_STORAGE_ITS_STORE_IMPLEMENTATION_ZMS
 )
 
 add_subdirectory(its)
+
+if(CONFIG_SECURE_STORAGE_PS_IMPLEMENTATION_ZEPHYR)
+  add_subdirectory(ps)
+endif()
